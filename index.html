@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiosk Management</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Info Trigger Icon */
+    .info-circle {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3.5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    .info-circle:active {
+      transform: scale(0.94);
+    }
+
+    .info-dot {
+      width: 5px;
+      height: 5px;
+      background-color: #1e293b;
+      border-radius: 50%;
+    }
+
+    .info-stem {
+      width: 5px;
+      height: 14px;
+      background-color: #1e293b;
+      border-radius: 2.5px;
+    }
+
+    /* Modal Backdrop */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.45);
+      z-index: 998;
+    }
+
+    .overlay.active {
+      display: block;
+    }
+
+    /* Base Dialog */
+    .kiosk-dialog {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 88%;
+      max-width: 440px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+      display: none;
+      flex-direction: column;
+      z-index: 999;
+    }
+
+    .kiosk-dialog.active {
+      display: flex;
+    }
+
+    /* --- About Kiosk Dialog Styles --- */
+    #aboutDialog {
+      padding: 30px 24px 20px 24px;
+    }
+
+    .about-header {
+      text-align: left;
+      font-size: 22px;
+      font-weight: 500;
+      color: #555555;
+      margin-bottom: 24px;
+    }
+
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .dialog-btn {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 6px;
+      border: 1px solid #d5e6f3;
+      background-color: #ffffff;
+      color: #38bdf8;
+      font-size: 17px;
+      font-weight: 400;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #licensesBtn {
+      color: #1e293b;
+    }
+
+    .version-info {
+      text-align: center;
+      font-size: 15px;
+      color: #555555;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .version-info strong {
+      font-weight: 600;
+      color: #334155;
+    }
+
+    /* --- Settings Dialog Styles --- */
+    #settingsDialog {
+      padding: 28px 24px 20px 24px;
+      min-height: 480px;
+    }
+
+    .settings-header {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      background: none;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .row-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .row-icon {
+      width: 24px;
+      height: 24px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .row-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .row-label {
+      font-size: 17px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .row-arrow {
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+    }
+
+    .row-arrow svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* --- Exit Kiosk Dialog --- */
+    #exitDialog {
+      padding: 32px 28px 20px 28px;
+      min-height: 520px;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .exit-header {
+      width: 100%;
+      font-size: 22px;
+      font-weight: 700;
+      color: #24424d;
+      margin-bottom: 26px;
+      text-align: left;
+    }
+
+    .exit-instructions {
+      width: 100%;
+      font-size: 16.5px;
+      line-height: 1.45;
+      color: #2f5665;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+
+    /* Code Input */
+    .code-input {
+      width: 100%;
+      padding: 12px 0 6px 0;
+      font-size: 18px;
+      border: none;
+      border-bottom: 2px solid #38bdf8;
+      outline: none;
+      background: transparent;
+      color: #1e293b;
+      letter-spacing: 2px;
+      text-align: left;
+    }
+
+    .code-input.error {
+      border-bottom-color: #ef4444;
+    }
+
+    .code-input::placeholder {
+      font-size: 15px;
+      color: #94a3b8;
+      letter-spacing: normal;
+    }
+
+    /* Error Message Text under the red line */
+    .error-msg {
+      display: none;
+      color: #ef4444;
+      font-size: 12.5px;
+      margin-top: 6px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    .metadata-stack {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: auto;
+      margin-bottom: 36px;
+      text-align: left;
+    }
+
+    .meta-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .meta-label {
+      font-size: 13px;
+      color: #93a9b5;
+      text-align: left;
+    }
+
+    .meta-value {
+      font-size: 14px;
+      color: #4a6d7c;
+      font-weight: 500;
+      text-align: left;
+    }
+
+    /* Footer Action Row (50/50 Split) */
+    .dialog-action-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    .dialog-action-row button {
+      flex: 1;
+      width: 50%;
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 10px 0;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .ok-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 12px 0;
+      cursor: pointer;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    .dialog-action-row button:active,
+    .ok-btn:active {
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="kiosk-dialog" id="aboutDialog">
+    <div class="about-header">About Kiosk</div>
+
+    <div class="btn-stack">
+      <button class="dialog-btn" id="settingsBtn">Settings</button>
+      <button class="dialog-btn" id="exitBtn">Exit Kiosk</button>
+      <button class="dialog-btn" id="licensesBtn">Open Source Licenses</button>
+    </div>
+
+    <div class="version-info">
+      <div><strong>Version</strong> <span>1.1.3</span></div>
+      <div><strong>Release Date</strong> <span>240613</span></div>
+    </div>
+
+    <button class="ok-btn" id="aboutOkBtn">OK</button>
+  </div>
+
+  <div class="kiosk-dialog" id="settingsDialog">
+    <div class="settings-header">Settings</div>
+
+    <div class="settings-list">
+      <button class="settings-row" id="wifiRow">
+        <div class="row-left">
+          <div class="row-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+              <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+          </div>
+          <span class="row-label">Wi-Fi</span>
+        </div>
+        <div class="row-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </button>
+
+      <button class="settings-row" id="displayRow">
+        <div class="row-left">
+          <div class="row-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="5" y="4" width="14" height="16" rx="2"></rect>
+              <line x1="2" y1="9" x2="2" y2="15"></line>
+              <line x1="22" y1="9" x2="22" y2="15"></line>
+            </svg>
+          </div>
+          <span class="row-label">Display</span>
+        </div>
+        <div class="row-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </button>
+
+      <button class="settings-row" id="bluetoothRow">
+        <div class="row-left">
+          <div class="row-icon">
+            <svg viewBox="0 0 24 24">
+              <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"></polyline>
+            </svg>
+          </div>
+          <span class="row-label">Bluetooth</span>
+        </div>
+        <div class="row-arrow">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+      </button>
+    </div>
+
+    <button class="ok-btn" id="settingsOkBtn">OK</button>
+  </div>
+
+  <div class="kiosk-dialog" id="exitDialog">
+    <div class="exit-header">Exit Kiosk</div>
+
+    <div class="exit-instructions">
+      Enter the 9-digit code given from your IT admin to exit kiosk.
+    </div>
+
+    <input 
+      type="tel" 
+      inputmode="numeric" 
+      pattern="[0-9]*" 
+      maxlength="9" 
+      class="code-input" 
+      id="exitCodeInput" 
+      placeholder="Enter code"
+    >
+    <div class="error-msg" id="errorMsg">Enter the 9 digit code to exit kiosk</div>
+
+    <div class="metadata-stack">
+      <div class="meta-group">
+        <span class="meta-label">User ID</span>
+        <span class="meta-value">Repmed2027</span>
+      </div>
+
+      <div class="meta-group">
+        <span class="meta-label">Device Name</span>
+        <span class="meta-value">Repmed2027Sm</span>
+      </div>
+
+      <div class="meta-group">
+        <span class="meta-label">IMEI</span>
+        <span class="meta-value">354991348928419</span>
+      </div>
+    </div>
+
+    <div class="dialog-action-row">
+      <button id="exitCancelBtn">Cancel</button>
+      <button id="exitSubmitBtn">OK</button>
+    </div>
+  </div>
+
+  <div class="info-circle" id="infoTrigger" role="button" aria-label="About Kiosk">
+    <div class="info-dot"></div>
+    <div class="info-stem"></div>
+  </div>
+
+  <script>
+    const infoTrigger = document.getElementById('infoTrigger');
+    const aboutDialog = document.getElementById('aboutDialog');
+    const settingsDialog = document.getElementById('settingsDialog');
+    const exitDialog = document.getElementById('exitDialog');
+    const overlay = document.getElementById('overlay');
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    const exitBtn = document.getElementById('exitBtn');
+    const aboutOkBtn = document.getElementById('aboutOkBtn');
+    const settingsOkBtn = document.getElementById('settingsOkBtn');
+    const exitCancelBtn = document.getElementById('exitCancelBtn');
+    const exitSubmitBtn = document.getElementById('exitSubmitBtn');
+    const exitCodeInput = document.getElementById('exitCodeInput');
+    const errorMsg = document.getElementById('errorMsg');
+
+    function clearError() {
+      exitCodeInput.classList.remove('error');
+      errorMsg.classList.remove('visible');
+    }
+
+    function closeAll() {
+      aboutDialog.classList.remove('active');
+      settingsDialog.classList.remove('active');
+      exitDialog.classList.remove('active');
+      overlay.classList.remove('active');
+      exitCodeInput.value = '';
+      clearError();
+    }
+
+    // Number-only input restriction + clear warning while editing
+    exitCodeInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+      clearError();
+    });
+
+    infoTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      aboutDialog.classList.add('active');
+      overlay.classList.add('active');
+    });
+
+    settingsBtn.addEventListener('click', () => {
+      aboutDialog.classList.remove('active');
+      settingsDialog.classList.add('active');
+    });
+
+    exitBtn.addEventListener('click', () => {
+      aboutDialog.classList.remove('active');
+      exitDialog.classList.add('active');
+      clearError();
+      exitCodeInput.value = '';
+      exitCodeInput.focus();
+    });
+
+    exitCancelBtn.addEventListener('click', () => {
+      exitDialog.classList.remove('active');
+      aboutDialog.classList.add('active');
+      exitCodeInput.value = '';
+      clearError();
+    });
+
+    // Check code length on submit
+    exitSubmitBtn.addEventListener('click', () => {
+      const code = exitCodeInput.value.trim();
+      if (code.length === 9) {
+        closeAll();
+      } else {
+        exitCodeInput.classList.add('error');
+        errorMsg.classList.add('visible');
+        exitCodeInput.focus();
+      }
+    });
+
+    aboutOkBtn.addEventListener('click', closeAll);
+    settingsOkBtn.addEventListener('click', closeAll);
+    overlay.addEventListener('click', closeAll);
+
+    document.getElementById('wifiRow').addEventListener('click', () => {
+      window.location.href = 'intent:#Intent;action=android.settings.WIFI_SETTINGS;end';
+    });
+
+    document.getElementById('displayRow').addEventListener('click', () => {
+      window.location.href = 'intent:#Intent;action=android.settings.DISPLAY_SETTINGS;end';
+    });
+
+    document.getElementById('bluetoothRow').addEventListener('click', () => {
+      window.location.href = 'intent:#Intent;action=android.settings.BLUETOOTH_SETTINGS;end';
+    });
+  </script>
+
+</body>
+</html>
