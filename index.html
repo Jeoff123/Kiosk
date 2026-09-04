@@ -14,7 +14,8 @@
       margin: 0;
       width: 100vw;
       height: 100vh;
-      background: transparent;
+      background: #000000 url("blpala.jpg") no-repeat center center fixed;
+      background-size: cover;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
@@ -358,8 +359,10 @@
 </head>
 <body>
 
+  <!-- Modal Backdrop -->
   <div class="overlay" id="overlay"></div>
 
+  <!-- Primary About Kiosk Dialog -->
   <div class="kiosk-dialog" id="aboutDialog">
     <div class="about-header">About Kiosk</div>
 
@@ -377,6 +380,7 @@
     <button class="ok-btn" id="aboutOkBtn">OK</button>
   </div>
 
+  <!-- Settings Dialog -->
   <div class="kiosk-dialog" id="settingsDialog">
     <div class="settings-header">Settings</div>
 
@@ -431,6 +435,7 @@
     <button class="ok-btn" id="settingsOkBtn">OK</button>
   </div>
 
+  <!-- Exit Kiosk Dialog -->
   <div class="kiosk-dialog" id="exitDialog">
     <div class="exit-header">Exit Kiosk</div>
 
@@ -438,6 +443,7 @@
       Enter the 9-digit code given from your IT admin to exit kiosk.
     </div>
 
+    <!-- Numeric-only 9-digit input -->
     <input 
       type="tel" 
       inputmode="numeric" 
@@ -466,12 +472,14 @@
       </div>
     </div>
 
+    <!-- 50/50 Split Action Row -->
     <div class="dialog-action-row">
       <button id="exitCancelBtn">Cancel</button>
       <button id="exitSubmitBtn">OK</button>
     </div>
   </div>
 
+  <!-- Trigger Icon -->
   <div class="info-circle" id="infoTrigger" role="button" aria-label="About Kiosk">
     <div class="info-dot"></div>
     <div class="info-stem"></div>
